@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spotify Auth</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0a0a0a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 20px;
+    }
+
+    .card {
+      background: #141414;
+      border: 1px solid #2a2a2a;
+      border-radius: 16px;
+      padding: 40px 36px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .icon { font-size: 48px; margin-bottom: 16px; }
+
+    h1 {
+      color: #fff;
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+
+    .code-block {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+      word-break: break-all;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 13px;
+      color: #1db954;
+      text-align: left;
+      line-height: 1.6;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .copy-btn {
+      width: 100%;
+      background: #1db954;
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      margin-bottom: 12px;
+    }
+
+    .copy-btn:hover { background: #1ed760; }
+    .copy-btn:active { transform: scale(0.98); }
+    .copy-btn.copied { background: #2a2a2a; color: #1db954; }
+
+    .hint {
+      color: #555;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .hint b { color: #888; }
+
+    .error-card h1 { color: #ff4444; }
+    .error-card .subtitle { color: #888; }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="icon" id="icon">⏳</div>
+    <h1 id="title">Загрузка...</h1>
+    <p class="subtitle" id="subtitle"></p>
+    <div id="content"></div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const code  = params.get("code");
+    const error = params.get("error");
+
+    const icon     = document.getElementById("icon");
+    const title    = document.getElementById("title");
+    const subtitle = document.getElementById("subtitle");
+    const content  = document.getElementById("content");
+    const card     = document.getElementById("card");
+
+    if (error) {
+      icon.textContent = "❌";
+      title.textContent = "Авторизация отменена";
+      subtitle.textContent = "Ты нажал «Отмена» на странице Spotify. Вернись в бот и начни заново через /setup.";
+      card.classList.add("error-card");
+
+    } else if (code) {
+      icon.textContent = "✅";
+      title.textContent = "Почти готово!";
+      subtitle.textContent = "Скопируй ссылку ниже и отправь её боту в Telegram:";
+
+      const fullUrl = window.location.href;
+
+      content.innerHTML = `
+        <div class="code-block" id="codeBlock">${fullUrl}</div>
+        <button class="copy-btn" id="copyBtn" onclick="copyUrl()">Скопировать ссылку</button>
+        <p class="hint">После этого вернись в Telegram и отправь скопированную ссылку боту.<br><b>Действует ~1 минуту</b> — не медли!</p>
+      `;
+
+    } else {
+      icon.textContent = "🤔";
+      title.textContent = "Что-то пошло не так";
+      subtitle.textContent = "Код авторизации не найден. Попробуй перейти по ссылке из бота ещё раз.";
+    }
+
+    function copyUrl() {
+      const btn = document.getElementById("copyBtn");
+      const url = window.location.href;
+      navigator.clipboard.writeText(url).then(() => {
+        btn.textContent = "✓ Скопировано!";
+        btn.classList.add("copied");
+        setTimeout(() => {
+          btn.textContent = "Скопировать ссылку";
+          btn.classList.remove("copied");
+        }, 2500);
+      }).catch(() => {
+        // Фоллбэк если clipboard недоступен
+        const el = document.createElement("textarea");
+        el.value = url;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand("copy");
+        document.body.removeChild(el);
+        btn.textContent = "✓ Скопировано!";
+        btn.classList.add("copied");
+        setTimeout(() => {
+          btn.textContent = "Скопировать ссылку";
+          btn.classList.remove("copied");
+        }, 2500);
+      });
+    }
+  </script>
+</body>
+</html>
